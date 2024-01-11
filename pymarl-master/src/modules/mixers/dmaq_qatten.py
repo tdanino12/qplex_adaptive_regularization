@@ -48,7 +48,7 @@ class DMAQ_QattenMixer(nn.Module):
         if is_v:
             v_tot = self.calc_v(agent_qs)
             decay = 0
-            return v_tot
+            return v_tot, decay
         else:
             adv_tot, decay = self.calc_adv(agent_qs, states, actions, max_q_i)
             return adv_tot, decay
