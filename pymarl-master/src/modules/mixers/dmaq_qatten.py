@@ -4,7 +4,7 @@ import torch.nn.functional as F
 import numpy as np
 import pickle as pkl
 from .dmaq_qatten_weight import Qatten_Weight
-from .dmaq_si_weight import DMAQ_SI_Weight
+from .dmaq_si_weight import DMAQ_SI_Weight, DMAQ_A_SI_Weight
 
 
 class DMAQ_QattenMixer(nn.Module):
@@ -20,7 +20,7 @@ class DMAQ_QattenMixer(nn.Module):
 
         self.attention_weight = Qatten_Weight(args)
         self.si_weight = DMAQ_SI_Weight(args)
-
+        self.decay = DMAQ_A_SI_Weight(args)
     def calc_v(self, agent_qs):
         agent_qs = agent_qs.view(-1, self.n_agents)
         v_tot = th.sum(agent_qs, dim=-1)
@@ -35,21 +35,23 @@ class DMAQ_QattenMixer(nn.Module):
         adv_q = (agent_qs - max_q_i).view(-1, self.n_agents).detach()
 
         adv_w_final = self.si_weight(states, actions)
+        decay = self.decay(states, actions)
         adv_w_final = adv_w_final.view(-1, self.n_agents)
 
         if self.args.is_minus_one:
             adv_tot = th.sum(adv_q * (adv_w_final - 1.), dim=1)
         else:
             adv_tot = th.sum(adv_q * adv_w_final, dim=1)
-        return adv_tot
+        return adv_tot, decay
 
     def calc(self, agent_qs, states, actions=None, max_q_i=None, is_v=False):
         if is_v:
             v_tot = self.calc_v(agent_qs)
+            decay = 0
             return v_tot
         else:
-            adv_tot = self.calc_adv(agent_qs, states, actions, max_q_i)
-            return adv_tot
+            adv_tot, decay = self.calc_adv(agent_qs, states, actions, max_q_i)
+            return adv_tot, decay
 
     def forward(self, agent_qs, states, actions=None, max_q_i=None, is_v=False):
         bs = agent_qs.size(0)
@@ -65,7 +67,7 @@ class DMAQ_QattenMixer(nn.Module):
             max_q_i = max_q_i.view(-1, self.n_agents)
             max_q_i = w_final * max_q_i + v
 
-        y = self.calc(agent_qs, states, actions=actions, max_q_i=max_q_i, is_v=is_v)
+        y, decay = self.calc(agent_qs, states, actions=actions, max_q_i=max_q_i, is_v=is_v)
         v_tot = y.view(bs, -1, 1)
 
-        return v_tot, attend_mag_regs, head_entropies
+        return v_tot, attend_mag_regs, head_entropies, decay
