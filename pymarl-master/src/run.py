@@ -18,7 +18,7 @@ from components.transforms import OneHot
 import numpy as np
 import copy as cp
 import random
-
+import wandb
 def run(_run, _config, _log):
 
     # check args sanity
