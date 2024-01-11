@@ -26,11 +26,12 @@ class DMAQ_qattenLearner:
                 self.mixer = DMAQ_QattenMixer(args)
             else:
                 raise ValueError("Mixer {} not recognised.".format(args.mixer))
-            self.params += list(self.mixer.parameters())
+            #self.params += list(self.mixer.parameters())
             self.target_mixer = copy.deepcopy(self.mixer)
 
-        self.optimiser = RMSprop(params=self.params, lr=args.lr, alpha=args.optim_alpha, eps=args.optim_eps)
-
+        #self.optimiser = RMSprop(params=self.params, lr=args.lr, alpha=args.optim_alpha, eps=args.optim_eps)
+        self.optimiser = RMSprop([{'params':self.params},{'params':list(self.mixer.attention_weight.parameters()), 'weight_decay':0.001},
+                                  {'params':list(self.mixer.si_weight.parameters()), 'weight_decay':0.001},,{'params':list(self.mixer.decay.parameters())}], lr=args.lr, alpha=args.optim_alpha, eps=args.optim_eps)
         # a little wasteful to deepcopy (e.g. duplicates action selector), but should work for any MAC
         self.target_mac = copy.deepcopy(mac)
 
@@ -168,6 +169,18 @@ class DMAQ_qattenLearner:
         masked_hit_prob = th.mean(is_max_action, dim=2) * mask
         hit_prob = masked_hit_prob.sum() / mask.sum()
 
+        ss = th.mean(decay)
+        ss_i = ss.item()
+
+
+        # Set the new weight decay value
+        if self.optimiser.param_groups[1]['weight_decay']>0:
+            self.optimiser.param_groups[1]['weight_decay'] = ss_i/100
+                # Set the new weight decay value
+        if self.optimiser.param_groups[2]['weight_decay']>0:
+            self.optimiser.param_groups[2]['weight_decay'] = ss_i/100
+            print(ss_i)
+                      
         # Optimise
         optimiser.zero_grad()
         loss.backward()
