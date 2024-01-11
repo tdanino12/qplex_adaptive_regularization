@@ -23,6 +23,9 @@ hypernet_embed: 64
 adv_hypernet_layers: 1
 adv_hypernet_embed: 64
 
+wandb_project: "diversity3"
+wandb_group: "3s5z_qplex_tunned_reg_normalized100new"
+
 num_kernel: 4
 is_minus_one: True
 is_adv_attention: True
