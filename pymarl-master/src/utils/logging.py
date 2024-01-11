@@ -48,7 +48,7 @@ class Logger:
             item = "{:.4f}".format(np.mean([x[1] for x in self.stats[k][-window:]]))
             log_str += "{:<25}{:>8}".format(k + ":", item)
             log_str += "\n" if i % 4 == 0 else "\t"
-             wandb.log({k: float(item)})
+            wandb.log({k: float(item)})
         self.console_logger.info(log_str)
 
 
