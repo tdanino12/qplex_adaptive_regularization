@@ -109,7 +109,8 @@ class DMAQ_QattenMixer(nn.Module):
                 
             samples_total = np.random.multivariate_normal(mean_numpy[i],cov_new,1)
             #samples = np.sum(samples_total,axis=0)
-            samples = np.maximum(samples_total,0)
+            samples_total = np.maximum(samples_total,0)
+            samples[i,:] = samples_total
             #samples = np.mean(samples,axis=0)
             #samples = np.sum(samples_total,axis=0)
 
