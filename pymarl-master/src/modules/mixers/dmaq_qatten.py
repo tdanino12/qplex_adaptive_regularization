@@ -19,7 +19,7 @@ class DMAQ_QattenMixer(nn.Module):
         self.state_action_dim = self.state_dim + self.action_dim + 1
 
         self.attention_weight = Qatten_Weight(args)
-        #self.si_weight = DMAQ_SI_Weight(args,0)
+        self.si_weight = DMAQ_SI_Weight(args,0)
         self.var = DMAQ_SI_Weight(args,0)
         
         #self.cov = DMAQ_A_SI_Weight(args)
@@ -38,7 +38,7 @@ class DMAQ_QattenMixer(nn.Module):
 
         adv_q = (agent_qs - max_q_i).view(-1, self.n_agents).detach()
 
-        #adv_w_final = self.si_weight(states, actions)
+        adv_w_final = self.si_weight(states, actions)
         
         #cov = self.cov(states,actions)
         cov = [self.cov[i](states,actions)for i in range(self.n_agents)]
