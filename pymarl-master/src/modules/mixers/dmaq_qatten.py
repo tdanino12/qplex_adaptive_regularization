@@ -19,7 +19,7 @@ class DMAQ_QattenMixer(nn.Module):
         self.state_action_dim = self.state_dim + self.action_dim + 1
 
         self.attention_weight = Qatten_Weight(args)
-        self.si_weight = DMAQ_SI_Weight(args,0)
+        #self.si_weight = DMAQ_SI_Weight(args,0)
         self.var = DMAQ_SI_Weight(args,0)
         
         #self.cov = DMAQ_A_SI_Weight(args)
@@ -38,7 +38,7 @@ class DMAQ_QattenMixer(nn.Module):
 
         adv_q = (agent_qs - max_q_i).view(-1, self.n_agents).detach()
 
-        adv_w_final = self.si_weight(states, actions)
+        #adv_w_final = self.si_weight(states, actions)
         
         #cov = self.cov(states,actions)
         cov = [self.cov[i](states,actions)for i in range(self.n_agents)]
@@ -62,7 +62,7 @@ class DMAQ_QattenMixer(nn.Module):
         #beta = self.beta(states, actions)
         #beta_clone = beta.clone()
         #beta_numpy = beta_clone.detach().numpy().reshape(alpha.shape[0],self.n_agents)
-        '''
+        
         from torch.distributions.multivariate_normal import MultivariateNormal
         cov_temp = cov.view(cov.shape[0],self.n_agents, self.n_agents-1)
         samples = th.zeros((mean.shape[0],self.n_agents))
@@ -72,13 +72,20 @@ class DMAQ_QattenMixer(nn.Module):
             cov_new[:,j,j] = var[:,j]
             cov_new[:,j,j+1:] = cov_temp[:,j,j:]
 
-        
+        '''
         samples_total = th.zeros(mean.shape[0],self.n_agents)
         for i in range(mean.shape[0]):
             m_total = MultivariateNormal(mean[i,:],scale_tril=th.tril(cov_new[i,:,:]))
             samples_total[i,:] = th.relu(m_total.sample((1,)))
+        '''
         
-
+        L = th.linalg.cholesky(cov_new)
+        epsilon = th.randn_like(mean)
+        z = mean + th.matmul(L, epsilon.unsqueeze(-1)).squeeze(-1)
+        samples = th.tensor(z, dtype=th.float32, requires_grad=True)
+        samples = th.nn.functional.relu(samples)
+        
+        '''
         for k in range(self.n_agents):
             # delete row
             cov_shrink  = th.cat((cov_new[:, :k, :], cov_new[:, k + 1:, :]), dim=1)
@@ -95,6 +102,7 @@ class DMAQ_QattenMixer(nn.Module):
             
                 s_t = s1
                 samples[i,k] = th.sigmoid(s_t)
+        '''
         '''
         mean_numpy = mean.detach().numpy()
         samples = np.zeros((mean_numpy.shape[0],mean_numpy.shape[1]))
@@ -138,7 +146,7 @@ class DMAQ_QattenMixer(nn.Module):
         #samples.requires_grad=True
         samples = th.tensor(samples, dtype=th.float32, requires_grad=True)
         samples = th.nn.functional.relu(samples)
-        
+        '''
         
         #adv_w_final = adv_w_final.view(-1, self.n_agents)
         adv_w_final = samples.view(-1, self.n_agents)
