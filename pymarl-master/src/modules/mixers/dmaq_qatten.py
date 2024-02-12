@@ -52,6 +52,7 @@ class DMAQ_QattenMixer(nn.Module):
             adv_tot = th.sum(adv_q * (adv_w_final - 1.), dim=1)
         else:
             adv_tot = th.sum(adv_q * adv_w_final, dim=1)
+        var = th.sum(var,dim=1)
         return adv_tot, var
 
     def calc(self, agent_qs, states, actions=None, max_q_i=None, is_v=False):
