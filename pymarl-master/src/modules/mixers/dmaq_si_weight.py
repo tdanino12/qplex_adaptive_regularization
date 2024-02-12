@@ -10,7 +10,7 @@ class DMAQ_SI_Weight(nn.Module):
 
         self.args = args
         if(minus_1==0):
-            self.n_agents = args.n_agents#*2
+            self.n_agents = args.n_agents*2
         else:
             self.n_agents = args.n_agents-1
         self.n_actions = args.n_actions
