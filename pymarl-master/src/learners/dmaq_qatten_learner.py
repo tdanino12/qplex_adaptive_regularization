@@ -121,9 +121,9 @@ class DMAQ_qattenLearner:
         # Mix
         if mixer is not None:
             if self.args.mixer == "dmaq_qatten":
-                ans_chosen, q_attend_regs, head_entropies,_ = \
+                ans_chosen, q_attend_regs, head_entropies,_,_ = \
                     mixer(chosen_action_qvals, batch["state"][:, :-1], is_v=True)
-                ans_adv, _, _, decay = mixer(chosen_action_qvals, batch["state"][:, :-1], actions=actions_onehot,
+                ans_adv, _, _, decay,_ = mixer(chosen_action_qvals, batch["state"][:, :-1], actions=actions_onehot,
                                       max_q_i=max_action_qvals, is_v=False)
                 chosen_action_qvals = ans_chosen + ans_adv
             else:
@@ -134,8 +134,8 @@ class DMAQ_qattenLearner:
 
             if self.args.double_q:
                 if self.args.mixer == "dmaq_qatten":
-                    target_chosen, _, _,_ = self.target_mixer(target_chosen_qvals, batch["state"][:, 1:], is_v=True)
-                    target_adv, _, _, decay = self.target_mixer(target_chosen_qvals, batch["state"][:, 1:],
+                    target_chosen, _, _,_ ,_= self.target_mixer(target_chosen_qvals, batch["state"][:, 1:], is_v=True)
+                    target_adv, _, _, decay,var_target = self.target_mixer(target_chosen_qvals, batch["state"][:, 1:],
                                                          actions=cur_max_actions_onehot,
                                                          max_q_i=target_max_qvals, is_v=False)
                     target_max_qvals = target_chosen + target_adv
@@ -161,8 +161,8 @@ class DMAQ_qattenLearner:
             return
 
         # Td-error
-        td_error = (chosen_action_qvals - targets.detach())
-
+        td_error = (chosen_action_qvals - targets.detach())/var_target
+                      
         mask = mask.expand_as(td_error)
 
         # 0-out the targets that came from padded data
