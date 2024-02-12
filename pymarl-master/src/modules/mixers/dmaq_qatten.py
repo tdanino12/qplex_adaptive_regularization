@@ -20,10 +20,10 @@ class DMAQ_QattenMixer(nn.Module):
 
         self.attention_weight = Qatten_Weight(args)
         self.si_weight = DMAQ_SI_Weight(args,0)
-        self.var = DMAQ_SI_Weight(args,0)
+        #self.var = DMAQ_SI_Weight(args,0)
         
         #self.cov = DMAQ_A_SI_Weight(args)
-        self.cov = [DMAQ_SI_Weight(args,1) for i in range(self.n_agents)]
+        #self.cov = [DMAQ_SI_Weight(args,1) for i in range(self.n_agents)]
     
     def calc_v(self, agent_qs):
         agent_qs = agent_qs.view(-1, self.n_agents)
